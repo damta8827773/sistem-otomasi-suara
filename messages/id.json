@@ -1,0 +1,32 @@
+{
+  "nav": {
+    "home": "Beranda",
+    "blog": "Blog",
+    "about": "Tentang"
+  },
+  "home": {
+    "greeting": "Halo, saya Damta",
+    "tagline": "Personal website, portfolio, dan blog.",
+    "readBlog": "Baca blog"
+  },
+  "blog": {
+    "title": "Blog",
+    "description": "Tulisan dan catatan.",
+    "readMore": "Baca selengkapnya",
+    "empty": "Belum ada tulisan.",
+    "backToList": "Kembali ke daftar"
+  },
+  "comment": {
+    "title": "Komentar",
+    "placeholder": "Tulis komentar…",
+    "submit": "Kirim",
+    "namePlaceholder": "Nama kamu",
+    "empty": "Jadilah yang pertama berkomentar.",
+    "sending": "Mengirim…",
+    "success": "Komentar terkirim!",
+    "error": "Gagal mengirim komentar."
+  },
+  "footer": {
+    "rights": "Seluruh hak cipta dilindungi."
+  }
+}

@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #111111;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Basic prose styling for MDX blog content. */
+.prose h1 {
+  @apply text-3xl font-bold mt-8 mb-4;
+}
+.prose h2 {
+  @apply text-2xl font-semibold mt-6 mb-3;
+}
+.prose p {
+  @apply my-4 leading-7;
+}
+.prose ul {
+  @apply list-disc pl-6 my-4;
+}
+.prose a {
+  @apply underline underline-offset-2;
+}

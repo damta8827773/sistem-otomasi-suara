@@ -1,0 +1,32 @@
+{
+  "nav": {
+    "home": "Home",
+    "blog": "Blog",
+    "about": "About"
+  },
+  "home": {
+    "greeting": "Hi, I'm Damta",
+    "tagline": "Personal website, portfolio, and blog.",
+    "readBlog": "Read the blog"
+  },
+  "blog": {
+    "title": "Blog",
+    "description": "Writing and notes.",
+    "readMore": "Read more",
+    "empty": "No posts yet.",
+    "backToList": "Back to list"
+  },
+  "comment": {
+    "title": "Comments",
+    "placeholder": "Write a comment…",
+    "submit": "Send",
+    "namePlaceholder": "Your name",
+    "empty": "Be the first to comment.",
+    "sending": "Sending…",
+    "success": "Comment sent!",
+    "error": "Failed to send comment."
+  },
+  "footer": {
+    "rights": "All rights reserved."
+  }
+}
