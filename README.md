@@ -2,115 +2,115 @@
 
 # Sistem Otomasi Suara
 
-A voice controlled automation system. Speak a command, and the system runs it.
-No dashboard, no forms, just your voice.
+A terminal voice controller for your laptop. Run it, speak, and your computer
+acts. Say "buka youtube" and YouTube opens. Say "kunci layar" and the screen
+locks. It understands any language, because it transcribes with Whisper.
 
-[![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-38BDF8?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![Web Speech API](https://img.shields.io/badge/Web_Speech_API-voice-orange)](https://developer.mozilla.org/docs/Web/API/Web_Speech_API)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Whisper](https://img.shields.io/badge/STT-faster--whisper-5A45FF)](https://github.com/SYSTRAN/faster-whisper)
+[![Platform](https://img.shields.io/badge/Platform-Windows-0078D6?logo=windows&logoColor=white)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 </div>
 
-## Overview
+## What it does
 
-Sistem Otomasi Suara turns spoken words into actions. It listens through the
-microphone, recognizes what you said, matches it to a command, runs the action,
-and speaks a short confirmation back. Everything runs in the browser using the
-Web Speech API, so there is no server call for the voice itself.
-
-The interface is deliberately minimal. There is one microphone button and a log
-of what you said. Voice is the only input.
-
-## How it works
+This is not a website. It is a program you start from the terminal. It listens
+to your microphone continuously, understands what you said in any language, and
+runs the matching action on the real system.
 
 ```
-microphone  ->  useSpeechRecognition  ->  parseIntent  ->  executeIntent  ->  spoken reply
-   (voice)        (Web Speech API)         (intent.ts)      (automation.ts)     (speech)
+microphone  ->  Whisper (any language)  ->  match command  ->  run on the laptop  ->  spoken reply
+ (your voice)     faster-whisper              intents.py         actions.py            SAPI voice
 ```
 
-1. **Listen**: `useSpeechRecognition` wraps the browser SpeechRecognition engine
-   and streams your speech as text.
-2. **Understand**: `parseIntent` matches the transcript against a command table.
-3. **Act**: `executeIntent` performs the action in the browser.
-4. **Reply**: the system speaks a confirmation with SpeechSynthesis.
+## Commands
 
-## Voice commands
+Speak naturally in Indonesian, English, or another language. Examples:
 
-Works in Indonesian and English. A few examples:
+| Say                          | It does                              |
+| :--------------------------- | :----------------------------------- |
+| `buka youtube` / `open youtube` | Open a site or an installed app    |
+| `cari resep nasi goreng`     | Search the web                       |
+| `jam berapa` / `what time`   | Speak the current time               |
+| `tanggal berapa`             | Speak today's date                   |
+| `volume naik` / `volume down`| Change the system volume             |
+| `bisukan` / `mute`           | Mute the sound                       |
+| `kunci layar` / `lock screen`| Lock the workstation                 |
+| `bantuan` / `help`           | List commands out loud               |
+| `berhenti` / `stop`          | Quit the program                     |
 
-| Say (ID)                | Say (EN)              | Action                          |
-| :---------------------- | :-------------------- | :------------------------------ |
-| `buka youtube`          | `open youtube`        | Open a known site or a website  |
-| `cari resep nasi goreng`| `search cake recipe`  | Search the web                  |
-| `jam berapa`            | `what time`           | Speak the current time          |
-| `tanggal berapa`        | `what date`           | Speak today's date              |
-| `mode gelap`            | `dark mode`           | Toggle dark and light theme     |
-| `gulir bawah`           | `scroll down`         | Scroll the page                 |
-| `muat ulang`            | `reload`              | Reload the page                 |
-| `bantuan`               | `help`                | List available commands         |
+Open works with known sites (youtube, google, github, gmail, whatsapp, ...),
+installed apps (notepad, kalkulator, chrome, spotify, pengaturan, ...), and any
+domain you say (for example "buka github.com").
 
-Adding a command is a two step change: add a keyword row in
-`common/constants/commands.ts` and a case in `services/automation.ts`.
+## Requirements
 
-## Getting started
+- **Windows** (uses Windows shell, volume keys, screen lock, and the SAPI voice).
+- **Python 3.10 or newer** (tested on 3.14).
+- A microphone.
+- Internet on the first run only, to download the Whisper model once.
 
-Requirements: Node 18 or newer. A Chromium based browser (Chrome or Edge) is
-recommended because it has the best Web Speech API support.
+## Setup
 
 ```sh
-npm install
-npm run dev        # http://localhost:3000
+python -m venv .venv
+.venv\Scripts\python -m pip install -r requirements.txt
 ```
 
-Open the site, press the microphone, allow microphone access, and start talking.
+## Run
 
-### Scripts
+Double click `run.bat`, or from the terminal:
 
-| Command         | What it does               |
-| :-------------- | :------------------------- |
-| `npm run dev`   | Start the dev server       |
-| `npm run build` | Create a production build  |
-| `npm run start` | Serve the production build |
-| `npm run lint`  | Run ESLint                 |
+```sh
+.venv\Scripts\python -m voice_control
+```
+
+The first run downloads the Whisper model (a few minutes). After that it prints
+`Siap.` and starts listening. Speak a command, and it acts and replies. Press
+`Ctrl+C` or say `berhenti` to stop.
+
+## Configuration
+
+Set environment variables before running to tune behavior:
+
+| Variable          | Default | Meaning                                             |
+| :---------------- | :------ | :-------------------------------------------------- |
+| `VOICE_MODEL`     | `base`  | Whisper size: `tiny`, `base`, `small`, `medium`     |
+| `VOICE_LANG`      | (auto)  | Force a language, for example `id`; empty auto-detects |
+| `VOICE_THRESHOLD` | `0.012` | Microphone sensitivity; raise it in a noisy room    |
+| `VOICE_SPEAK`     | `1`     | Set to `0` to disable the spoken reply              |
+
+Bigger models understand more languages more accurately but run slower. If
+recognition feels weak, try `VOICE_MODEL=small`.
 
 ## Project structure
 
 ```
-app/                    Next.js App Router
-  [locale]/             locale segmented routes (id, en)
-    layout.tsx          minimal shell, builds metadata
-    page.tsx            the voice page
-  layout.tsx            root layout
-  globals.css
-common/
-  constants/
-    metadata.ts         site metadata
-    commands.ts         voice command vocabulary
-  libs/
-    intent.ts           transcript to intent parser
-    tts.ts              text to speech helper
-hooks/
-  useSpeechRecognition.ts  Web Speech API hook
-i18n/                   next-intl routing and request config
-messages/               id.json and en.json
-modules/
-  voice/components/     VoiceControl and TranscriptLog
-services/
-  automation.ts         runs the recognized action
-speech-recognition.d.ts ambient types for the Web Speech API
-middleware.ts           next-intl locale middleware
+voice_control/
+  __main__.py     entry point: the listen -> understand -> act loop
+  config.py       settings (model, thresholds, language)
+  listener.py     microphone capture + voice activity detection
+  transcriber.py  Whisper speech to text (auto language)
+  intents.py      transcript -> command
+  actions.py      run the command on the laptop
+  speech.py       spoken reply (Windows SAPI)
+requirements.txt
+run.bat           convenience launcher
 ```
+
+## Adding a command
+
+Two small edits: add keywords in `voice_control/intents.py` and handle the new
+action in `voice_control/actions.py`.
 
 ## Notes and limits
 
-- The Web Speech API is a browser feature. Support is best on Chrome and Edge,
-  and it needs an internet connection in some browsers.
-- Popup blockers may stop `open` and `search` from opening a new tab until you
-  allow popups for the site.
-- Actions are limited to what a web page can safely do, such as opening sites,
-  searching, scrolling, and switching theme.
+- Speech recognition runs locally after the one-time model download. No audio
+  leaves the machine.
+- Actions are Windows specific. Porting to macOS or Linux means changing
+  `actions.py` (volume keys, screen lock) and `speech.py`.
+- Recognition quality depends on the model size and your microphone.
 
 ## License
 

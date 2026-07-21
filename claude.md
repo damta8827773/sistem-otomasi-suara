@@ -1,78 +1,67 @@
 # Project: Sistem Otomasi Suara
 
-A voice controlled automation system. The user speaks a command, the system
-recognizes it, runs the action in the browser, and speaks a confirmation back.
-Voice is the only input. There is no dashboard.
+A terminal voice controller for the laptop. You run `python -m voice_control`,
+speak a command in any language, and the program performs the action on the real
+operating system (open apps and sites, control volume, lock the screen). It
+speaks a short reply back. Voice is the only input. There is no web UI.
 
-> HISTORY: An earlier spec (from another assistant) built this as a native
-> Rust/Go/C++ "voice OS" and prohibited TypeScript. A later attempt misread a
-> reference screenshot and built a personal portfolio blog. Both were wrong.
-> The real project is this: a voice automation system using the Next.js App
-> Router folder structure with TypeScript.
+> HISTORY (so the goal is not misread again): earlier attempts built (1) a
+> native Rust/Go/C++ "voice OS", (2) a personal portfolio blog, and (3) a
+> Next.js voice web app. All wrong. A web app runs inside a browser sandbox and
+> cannot control the laptop. The real goal is THIS: a local terminal program
+> that listens and drives the actual system.
 
 ## Stack
 
-- **Framework:** Next.js (App Router)
-- **Language:** TypeScript (strict)
-- **Voice input:** Web Speech API (SpeechRecognition), client side
-- **Voice output:** SpeechSynthesis (text to speech)
-- **Styling:** Tailwind CSS (class based dark mode)
-- **i18n:** next-intl, locales `id` (default) and `en`
-
-## Directory structure
-
-```
-app/                    Next.js App Router
-  [locale]/             locale segmented routes (id, en)
-    layout.tsx          minimal shell, builds metadata, language switch
-    page.tsx            the single voice page
-  layout.tsx            root layout
-  globals.css
-common/
-  constants/
-    metadata.ts         site metadata (source of truth)
-    commands.ts         voice command vocabulary (keywords -> action)
-  libs/
-    intent.ts           transcript -> Intent parser
-    tts.ts              speak() helper (SpeechSynthesis)
-hooks/
-  useSpeechRecognition.ts  Web Speech API hook (continuous, auto restart)
-i18n/                   next-intl routing + request config
-messages/               id.json, en.json
-modules/
-  voice/components/     VoiceControl (mic UI), TranscriptLog
-services/
-  automation.ts         executeIntent: runs the action, speaks a reply
-speech-recognition.d.ts ambient types for the Web Speech API
-middleware.ts           next-intl locale middleware
-```
+- **Language:** Python 3.10+ (tested on 3.14)
+- **Speech to text:** faster-whisper (Whisper), auto-detects language, offline
+  after the one-time model download
+- **Microphone:** sounddevice (bundled PortAudio, no external binary)
+- **Actions:** Windows shell (`start`), ctypes for volume keys and screen lock
+- **Spoken reply:** Windows SAPI via PowerShell (no extra dependency)
+- **Platform:** Windows (the actions are Windows specific)
 
 ## Data flow
 
 ```
-mic -> useSpeechRecognition -> parseIntent -> executeIntent -> speak reply
+mic -> listener (VAD) -> transcriber (Whisper) -> parse_intent -> execute -> speak
+```
+
+## Structure
+
+```
+voice_control/
+  __main__.py     entry point and main loop
+  config.py       settings via env vars (VOICE_MODEL, VOICE_LANG, ...)
+  listener.py     mic capture + energy based voice activity detection
+  transcriber.py  faster-whisper wrapper (language=None => auto)
+  intents.py      keyword table -> Intent (multi language)
+  actions.py      ActionResult execute(): opens apps/sites, volume, lock
+  speech.py       speak(): Windows SAPI reply
+requirements.txt  faster-whisper, sounddevice, numpy
+run.bat           launcher using the .venv
 ```
 
 ## Conventions
 
-- **Voice only.** The UI is a microphone button plus a command log. Do not add a
-  dashboard or forms.
-- **Adding a command** is two edits: a keyword row in
-  `common/constants/commands.ts` and a `case` in `services/automation.ts`.
-- **No hardcoded UI strings.** Add keys to `messages/{id,en}.json` and read them
-  with next-intl.
-- **`services/`** holds the action logic and has no React.
-- **Actions must be browser safe** (open site, search, scroll, theme, reload).
+- **Voice only, terminal only.** No web server, no GUI, no dashboard.
+- **Adding a command** is two edits: keywords in `intents.py` and a branch in
+  `actions.py`.
+- **Actions must be real system actions** (this is the whole point) and are
+  Windows specific for now.
+- Keep the model default at `base`; `small` is the fallback for better accuracy.
 
 ## Commands
 
 ```sh
-npm install
-npm run dev        # local development
-npm run build      # production build
-npm run start      # serve production build
-npm run lint       # eslint
+python -m venv .venv
+.venv\Scripts\python -m pip install -r requirements.txt
+.venv\Scripts\python -m voice_control      # run (or double-click run.bat)
 ```
 
-Note: Bun is not installed on the current machine, so use npm. A Chromium based
-browser (Chrome or Edge) is recommended for Web Speech API support.
+Environment: `VOICE_MODEL` (tiny|base|small|medium), `VOICE_LANG` (empty=auto),
+`VOICE_THRESHOLD` (mic sensitivity), `VOICE_SPEAK` (0 to mute replies).
+
+Note: the working directory is `sistem otomatis`. The separate real personal
+site lives at `C:\Users\ASUS\Desktop\damtaweb.com` and must not be touched.
+Bun is not installed here.

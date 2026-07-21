@@ -1,0 +1,4 @@
+# Sistem Otomasi Suara dependencies (Python 3.10+).
+faster-whisper>=1.1
+sounddevice>=0.4
+numpy>=1.26
