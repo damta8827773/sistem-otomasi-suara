@@ -4,6 +4,7 @@ opening apps and sites, controlling volume, locking the screen."""
 from __future__ import annotations
 
 import ctypes
+import re
 import subprocess
 import webbrowser
 from dataclasses import dataclass
@@ -80,18 +81,23 @@ def execute(intent: Intent, lang: str | None) -> ActionResult:
     if action == "open_site":
         if not arg:
             return ActionResult(False, msg("Mau buka apa?", "Open what?"))
-        key = arg.lower().replace(" ", "")
-        if key in APPS:
-            _start(APPS[key])
-            return ActionResult(True, msg(f"Membuka {arg}", f"Opening {arg}"))
-        if key in SITES:
-            webbrowser.open(SITES[key])
-            return ActionResult(True, msg(f"Membuka {arg}", f"Opening {arg}"))
-        if "." in key:
-            webbrowser.open("https://" + key)
-            return ActionResult(True, msg(f"Membuka {arg}", f"Opening {arg}"))
-        _start(arg)  # last resort: let the shell try to resolve it
-        return ActionResult(True, msg(f"Mencoba membuka {arg}", f"Trying to open {arg}"))
+        # Scan the words for a known app, site, or domain so filler words like
+        # "coba dong" or "tolong" do not break the match.
+        for word in re.findall(r"[a-z0-9.]+", arg.lower()):
+            if word in APPS:
+                _start(APPS[word])
+                return ActionResult(True, msg(f"Membuka {word}", f"Opening {word}"))
+            if word in SITES:
+                webbrowser.open(SITES[word])
+                return ActionResult(True, msg(f"Membuka {word}", f"Opening {word}"))
+            if "." in word and len(word) > 3:
+                webbrowser.open("https://" + word)
+                return ActionResult(True, msg(f"Membuka {word}", f"Opening {word}"))
+        # Nothing recognized: search for it instead of failing with a shell error.
+        webbrowser.open("https://www.google.com/search?q=" + quote(arg))
+        return ActionResult(
+            True, msg(f"Tidak ketemu aplikasinya, mencari {arg}", f"Not found, searching {arg}")
+        )
 
     if action == "search":
         if not arg:

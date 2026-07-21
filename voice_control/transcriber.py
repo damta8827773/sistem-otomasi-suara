@@ -17,13 +17,22 @@ class Transcriber:
             cfg.model_size, device=cfg.device, compute_type=cfg.compute_type
         )
 
+    def _language(self) -> str | None:
+        lang = self.cfg.language
+        if lang is None:
+            return None
+        return None if lang.strip().lower() in ("", "auto") else lang
+
     def transcribe(self, audio: np.ndarray) -> tuple[str, str]:
         """Return (text, detected_language_code)."""
         segments, info = self.model.transcribe(
             audio,
-            language=self.cfg.language,
+            language=self._language(),
             beam_size=1,
             vad_filter=True,
+            temperature=0.0,
+            condition_on_previous_text=False,
+            no_speech_threshold=0.6,
         )
         text = "".join(segment.text for segment in segments).strip()
         return text, info.language

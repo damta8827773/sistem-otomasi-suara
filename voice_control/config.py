@@ -15,8 +15,10 @@ class Config:
     device: str = os.getenv("VOICE_DEVICE", "cpu")
     compute_type: str = os.getenv("VOICE_COMPUTE", "int8")
 
-    # None means auto-detect the spoken language (works for any language).
-    language: str | None = os.getenv("VOICE_LANG") or None
+    # Spoken language. Default is Indonesian, which is far more reliable than
+    # auto-detect for short commands. Set VOICE_LANG=auto to detect any
+    # language, or VOICE_LANG=en (or another code) to force one.
+    language: str | None = os.getenv("VOICE_LANG", "id")
 
     # Audio capture.
     sample_rate: int = 16000

@@ -6,6 +6,7 @@ matching action on the laptop, and speaks a short reply.
 
 from __future__ import annotations
 
+import re
 import sys
 
 from .actions import execute
@@ -40,7 +41,8 @@ def main() -> None:
     try:
         for audio in mic.utterances():
             text, lang = transcriber.transcribe(audio)
-            if not text:
+            # Skip empty or pure-noise results (no actual word characters).
+            if not text or not re.search(r"\w", text, re.UNICODE):
                 continue
 
             print(f"  ● didengar [{lang}]: {text}")
