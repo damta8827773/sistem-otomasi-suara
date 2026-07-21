@@ -1,5 +1,5 @@
-import { setRequestLocale } from "next-intl/server";
-import { Hero } from "@/modules/home/components/Hero";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { VoiceControl } from "@/modules/voice/components/VoiceControl";
 
 export default async function HomePage({
   params,
@@ -8,6 +8,15 @@ export default async function HomePage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const t = await getTranslations("home");
 
-  return <Hero />;
+  return (
+    <section className="flex flex-col items-center gap-4 py-8 text-center">
+      <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+      <p className="max-w-md text-black/60 dark:text-white/60">{t("subtitle")}</p>
+      <div className="mt-6 w-full">
+        <VoiceControl />
+      </div>
+    </section>
+  );
 }

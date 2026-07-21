@@ -1,32 +1,20 @@
 {
-  "nav": {
-    "home": "Beranda",
-    "blog": "Blog",
-    "about": "Tentang"
+  "app": {
+    "name": "Sistem Otomasi Suara"
   },
   "home": {
-    "greeting": "Halo, saya Damta",
-    "tagline": "Personal website, portfolio, dan blog.",
-    "readBlog": "Baca blog"
+    "title": "Bicara, sistem menjalankan.",
+    "subtitle": "Sistem otomasi yang dikendalikan sepenuhnya lewat suara. Tekan mikrofon, lalu ucapkan perintah."
   },
-  "blog": {
-    "title": "Blog",
-    "description": "Tulisan dan catatan.",
-    "readMore": "Baca selengkapnya",
-    "empty": "Belum ada tulisan.",
-    "backToList": "Kembali ke daftar"
-  },
-  "comment": {
-    "title": "Komentar",
-    "placeholder": "Tulis komentar…",
-    "submit": "Kirim",
-    "namePlaceholder": "Nama kamu",
-    "empty": "Jadilah yang pertama berkomentar.",
-    "sending": "Mengirim…",
-    "success": "Komentar terkirim!",
-    "error": "Gagal mengirim komentar."
-  },
-  "footer": {
-    "rights": "Seluruh hak cipta dilindungi."
+  "voice": {
+    "start": "Mulai mendengarkan",
+    "stop": "Berhenti",
+    "listening": "Mendengarkan…",
+    "idle": "Tekan mikrofon untuk mulai",
+    "empty": "Belum ada perintah. Coba ucapkan sesuatu.",
+    "error": "Terjadi kesalahan",
+    "unsupported": "Browser ini belum mendukung pengenalan suara. Silakan gunakan Google Chrome atau Microsoft Edge.",
+    "commandsTitle": "Contoh perintah",
+    "commands": "buka youtube · cari resep nasi goreng · jam berapa · tanggal berapa · mode gelap · gulir bawah · muat ulang · bantuan"
   }
 }

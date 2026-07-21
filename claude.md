@@ -1,107 +1,78 @@
-# Project: damtaweb.com
+# Project: Sistem Otomasi Suara
 
-Personal website, portfolio, and blog for **Damta Noviyan Muhamad Faiz**.
+A voice controlled automation system. The user speaks a command, the system
+recognizes it, runs the action in the browser, and speaks a confirmation back.
+Voice is the only input. There is no dashboard.
 
-> NOTE: An earlier version of this file (written by another assistant) badly
-> misread the folder names below and invented a "voice-controlled OS" in
-> Rust/Go/C++ — even prohibiting TypeScript. That was wrong. The folder names
-> (`app`, `common/constants`, `common/libs`, `hooks`, `i18n`, `messages`,
-> `modules`, `services`, `middleware`) are a standard **Next.js App Router**
-> layout. This file now describes the real project.
+> HISTORY: An earlier spec (from another assistant) built this as a native
+> Rust/Go/C++ "voice OS" and prohibited TypeScript. A later attempt misread a
+> reference screenshot and built a personal portfolio blog. Both were wrong.
+> The real project is this: a voice automation system using the Next.js App
+> Router folder structure with TypeScript.
 
 ## Stack
 
 - **Framework:** Next.js (App Router)
 - **Language:** TypeScript (strict)
-- **Runtime / package manager:** Bun (`bun.lockb`)
-- **Styling:** Tailwind CSS
-- **Content:** MDX for blog posts / writing (`contents/`)
-- **i18n:** `next-intl` — default locale `id-ID`, plus `en`
-- **Lint:** ESLint (`.eslintrc.json`)
-
-Explicitly a **web** project: HTML/CSS/TS/JSX are expected and required (the
-opposite of the previous erroneous spec).
+- **Voice input:** Web Speech API (SpeechRecognition), client side
+- **Voice output:** SpeechSynthesis (text to speech)
+- **Styling:** Tailwind CSS (class based dark mode)
+- **i18n:** next-intl, locales `id` (default) and `en`
 
 ## Directory structure
 
 ```
-damtaweb/
-├── app/                      # Next.js App Router (routing + layouts)
-│   ├── [locale]/             # locale-segmented routes (id, en)
-│   │   ├── layout.tsx        # main layout, injects metadata
-│   │   ├── page.tsx          # home
-│   │   └── blog/             # blog list + [slug] post pages
-│   ├── layout.tsx            # root layout (html/body)
-│   └── globals.css
-├── common/                   # shared, cross-feature code
-│   ├── constants/
-│   │   └── metadata.ts       # site metadata (creator, openGraph, etc.)
-│   └── libs/
-│       └── mdx.ts            # MDX loading/parsing helpers
-├── contents/                 # MDX content (blog posts, writing)
-├── hooks/                    # shared React hooks
-│   └── useNotif.ts           # notification/toast hook
-├── i18n/                     # next-intl configuration
-│   ├── routing.ts            # locales + defaultLocale
-│   └── request.ts            # per-request message loading
-├── messages/                 # i18n translation catalogs
-│   ├── id.json
-│   └── en.json
-├── modules/                  # feature modules (React components by feature)
-│   ├── home/
-│   ├── blog/
-│   └── comment/              # comment system (Tanya/komentar)
-├── public/                   # static assets (images: /images/damta.jpg)
-├── services/                 # data/API service layer
-├── .eslintrc.json
-├── .gitignore
-├── middleware.ts             # next-intl locale middleware
-├── next.config.mjs           # Next + MDX + next-intl plugins
-├── next-env.d.ts
-├── package.json
-├── tailwind.config.ts
-└── tsconfig.json
+app/                    Next.js App Router
+  [locale]/             locale segmented routes (id, en)
+    layout.tsx          minimal shell, builds metadata, language switch
+    page.tsx            the single voice page
+  layout.tsx            root layout
+  globals.css
+common/
+  constants/
+    metadata.ts         site metadata (source of truth)
+    commands.ts         voice command vocabulary (keywords -> action)
+  libs/
+    intent.ts           transcript -> Intent parser
+    tts.ts              speak() helper (SpeechSynthesis)
+hooks/
+  useSpeechRecognition.ts  Web Speech API hook (continuous, auto restart)
+i18n/                   next-intl routing + request config
+messages/               id.json, en.json
+modules/
+  voice/components/     VoiceControl (mic UI), TranscriptLog
+services/
+  automation.ts         executeIntent: runs the action, speaks a reply
+speech-recognition.d.ts ambient types for the Web Speech API
+middleware.ts           next-intl locale middleware
+```
+
+## Data flow
+
+```
+mic -> useSpeechRecognition -> parseIntent -> executeIntent -> speak reply
 ```
 
 ## Conventions
 
-- **Routing** lives only in `app/`; feature UI lives in `modules/<feature>` and
-  is imported into the route files. Keep route files thin.
-- **`services/`** holds data access (fetching posts, comments, etc.) — no React
-  in this layer.
-- **`common/`** is for genuinely shared things (metadata, MDX libs, utilities);
-  don't put feature-specific code here.
-- **i18n:** never hardcode UI strings — add keys to `messages/{id,en}.json` and
-  read them via `next-intl`.
-- **Content:** blog posts are `.mdx` files in `contents/`, loaded through
-  `common/libs/mdx.ts`.
-
-## Site metadata (source of truth)
-
-`common/constants/metadata.ts`:
-
-```ts
-export const METADATA = {
-  creator: "Damta Noviyan Muhamad Faiz",
-  description: "Personal website, portfolio, blog",
-  keyword: "damta, damta noviyan muhamad faiz",
-  authors: { name: "Damta Noviyan Muhamad Faiz", url: process.env.DOMAIN },
-  openGraph: {
-    url: process.env.DOMAIN,
-    siteName: "Damta Noviyan Muhamad Faiz",
-    locale: "id-ID",
-  },
-  exTitle: "| Damta Noviyan Muhamad Faiz",
-  profile: "/images/damta.jpg",
-};
-```
+- **Voice only.** The UI is a microphone button plus a command log. Do not add a
+  dashboard or forms.
+- **Adding a command** is two edits: a keyword row in
+  `common/constants/commands.ts` and a `case` in `services/automation.ts`.
+- **No hardcoded UI strings.** Add keys to `messages/{id,en}.json` and read them
+  with next-intl.
+- **`services/`** holds the action logic and has no React.
+- **Actions must be browser safe** (open site, search, scroll, theme, reload).
 
 ## Commands
 
 ```sh
-bun install
-bun run dev        # local development
-bun run build      # production build
-bun run start      # serve production build
-bun run lint       # eslint
+npm install
+npm run dev        # local development
+npm run build      # production build
+npm run start      # serve production build
+npm run lint       # eslint
 ```
+
+Note: Bun is not installed on the current machine, so use npm. A Chromium based
+browser (Chrome or Edge) is recommended for Web Speech API support.

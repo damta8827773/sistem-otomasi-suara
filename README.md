@@ -1,141 +1,120 @@
 <div align="center">
 
-# damtaweb.com
+# Sistem Otomasi Suara
 
-Personal website, portfolio, and blog of **Damta Noviyan Muhamad Faiz**.
+A voice controlled automation system. Speak a command, and the system runs it.
+No dashboard, no forms, just your voice.
 
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-38BDF8?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![next-intl](https://img.shields.io/badge/i18n-next--intl-orange)](https://next-intl.dev/)
+[![Web Speech API](https://img.shields.io/badge/Web_Speech_API-voice-orange)](https://developer.mozilla.org/docs/Web/API/Web_Speech_API)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 </div>
 
 ## Overview
 
-A fast, modern personal site built on the Next.js App Router. It ships with a
-bilingual interface (Indonesian and English), an MDX powered blog, and a
-lightweight comment system. The codebase is organized by feature so it stays
-easy to read, extend, and reuse.
+Sistem Otomasi Suara turns spoken words into actions. It listens through the
+microphone, recognizes what you said, matches it to a command, runs the action,
+and speaks a short confirmation back. Everything runs in the browser using the
+Web Speech API, so there is no server call for the voice itself.
 
-Use it as a starting point for your own portfolio, or explore the structure to
-see one clean way to wire up i18n, MDX, and a service layer in Next.js.
+The interface is deliberately minimal. There is one microphone button and a log
+of what you said. Voice is the only input.
 
-## Features
+## How it works
 
-- **App Router** with locale segmented routes (`/`, `/en`, `/blog/...`).
-- **Bilingual** out of the box with next-intl (default `id`, plus `en`).
-- **MDX blog** with frontmatter, loaded through a small server side helper.
-- **Comment system** with a client component, a toast hook, and an API route.
-- **TypeScript strict** across the whole project.
-- **Tailwind CSS** with light and dark mode support.
-- **Feature first structure**: thin routes, UI in `modules`, data in `services`.
+```
+microphone  ->  useSpeechRecognition  ->  parseIntent  ->  executeIntent  ->  spoken reply
+   (voice)        (Web Speech API)         (intent.ts)      (automation.ts)     (speech)
+```
 
-## Tech stack
+1. **Listen**: `useSpeechRecognition` wraps the browser SpeechRecognition engine
+   and streams your speech as text.
+2. **Understand**: `parseIntent` matches the transcript against a command table.
+3. **Act**: `executeIntent` performs the action in the browser.
+4. **Reply**: the system speaks a confirmation with SpeechSynthesis.
 
-| Area           | Choice                     |
-| :------------- | :------------------------- |
-| Framework      | Next.js 14 (App Router)    |
-| Language       | TypeScript (strict)        |
-| Styling        | Tailwind CSS               |
-| Content        | MDX + gray-matter          |
-| i18n           | next-intl                  |
-| Package manager| Bun (npm also works)       |
+## Voice commands
+
+Works in Indonesian and English. A few examples:
+
+| Say (ID)                | Say (EN)              | Action                          |
+| :---------------------- | :-------------------- | :------------------------------ |
+| `buka youtube`          | `open youtube`        | Open a known site or a website  |
+| `cari resep nasi goreng`| `search cake recipe`  | Search the web                  |
+| `jam berapa`            | `what time`           | Speak the current time          |
+| `tanggal berapa`        | `what date`           | Speak today's date              |
+| `mode gelap`            | `dark mode`           | Toggle dark and light theme     |
+| `gulir bawah`           | `scroll down`         | Scroll the page                 |
+| `muat ulang`            | `reload`              | Reload the page                 |
+| `bantuan`               | `help`                | List available commands         |
+
+Adding a command is a two step change: add a keyword row in
+`common/constants/commands.ts` and a case in `services/automation.ts`.
 
 ## Getting started
 
-Requirements: Node 18 or newer. Bun is recommended but optional.
+Requirements: Node 18 or newer. A Chromium based browser (Chrome or Edge) is
+recommended because it has the best Web Speech API support.
 
 ```sh
-# 1. Install dependencies
-bun install          # or: npm install
-
-# 2. Configure environment
-cp .env.example .env  # then set DOMAIN
-
-# 3. Run the dev server
-bun run dev          # or: npm run dev
+npm install
+npm run dev        # http://localhost:3000
 ```
 
-Open http://localhost:3000 in your browser.
+Open the site, press the microphone, allow microphone access, and start talking.
 
 ### Scripts
 
-| Command         | What it does           |
-| :-------------- | :--------------------- |
-| `bun run dev`   | Start the dev server   |
-| `bun run build` | Create a production build |
-| `bun run start` | Serve the production build |
-| `bun run lint`  | Run ESLint             |
+| Command         | What it does               |
+| :-------------- | :------------------------- |
+| `npm run dev`   | Start the dev server       |
+| `npm run build` | Create a production build  |
+| `npm run start` | Serve the production build |
+| `npm run lint`  | Run ESLint                 |
 
 ## Project structure
 
 ```
 app/                    Next.js App Router
   [locale]/             locale segmented routes (id, en)
-    layout.tsx          main layout, builds metadata
-    page.tsx            home
-    blog/               blog list and [slug] post pages
-  api/comments/         comment API route
+    layout.tsx          minimal shell, builds metadata
+    page.tsx            the voice page
   layout.tsx            root layout
   globals.css
 common/
-  constants/metadata.ts site metadata, the single source of truth
-  libs/mdx.ts           MDX loader with frontmatter parsing
-contents/blog/          .mdx blog posts
-hooks/useNotif.ts       toast and notification hook
+  constants/
+    metadata.ts         site metadata
+    commands.ts         voice command vocabulary
+  libs/
+    intent.ts           transcript to intent parser
+    tts.ts              text to speech helper
+hooks/
+  useSpeechRecognition.ts  Web Speech API hook
 i18n/                   next-intl routing and request config
-messages/               id.json and en.json translation catalogs
-modules/                feature UI (home, blog, comment)
-public/                 static assets, for example images/damta.jpg
-services/               data access layer (comment.ts)
+messages/               id.json and en.json
+modules/
+  voice/components/     VoiceControl and TranscriptLog
+services/
+  automation.ts         runs the recognized action
+speech-recognition.d.ts ambient types for the Web Speech API
 middleware.ts           next-intl locale middleware
 ```
 
-## Writing a blog post
+## Notes and limits
 
-Create a new `.mdx` file inside `contents/blog` with frontmatter:
-
-```mdx
----
-title: "My first post"
-date: "2026-07-21"
-summary: "A short description shown in the blog list."
-lang: "id"
-tags: ["personal"]
----
-
-Write your content here in Markdown or MDX.
-```
-
-The post appears automatically on the blog page, sorted by date.
-
-## Internationalization
-
-UI strings live in `messages/id.json` and `messages/en.json`. Never hardcode
-text in components. Add a key to both catalogs and read it with the `next-intl`
-hooks. The active locale is detected by the middleware and reflected in the URL.
-
-## Deployment
-
-The project deploys cleanly to any platform that supports Next.js. The fastest
-path is Vercel:
-
-1. Push this repository to GitHub.
-2. Import it on Vercel.
-3. Set the `DOMAIN` environment variable.
-4. Deploy.
-
-## Notes
-
-- The comment store in `app/api/comments/route.ts` is in memory for local
-  development. Connect a real database before going to production.
-- Add your photo at `public/images/damta.jpg`, referenced by `metadata.profile`.
+- The Web Speech API is a browser feature. Support is best on Chrome and Edge,
+  and it needs an internet connection in some browsers.
+- Popup blockers may stop `open` and `search` from opening a new tab until you
+  allow popups for the site.
+- Actions are limited to what a web page can safely do, such as opening sites,
+  searching, scrolling, and switching theme.
 
 ## License
 
-Released under the MIT License. See [LICENSE](LICENSE) for details.
+Released under the MIT License. See [LICENSE](LICENSE).
 
 ## Author
 

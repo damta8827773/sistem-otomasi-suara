@@ -1,32 +1,20 @@
 {
-  "nav": {
-    "home": "Home",
-    "blog": "Blog",
-    "about": "About"
+  "app": {
+    "name": "Voice Automation System"
   },
   "home": {
-    "greeting": "Hi, I'm Damta",
-    "tagline": "Personal website, portfolio, and blog.",
-    "readBlog": "Read the blog"
+    "title": "Speak, the system acts.",
+    "subtitle": "An automation system controlled entirely by voice. Press the microphone, then say a command."
   },
-  "blog": {
-    "title": "Blog",
-    "description": "Writing and notes.",
-    "readMore": "Read more",
-    "empty": "No posts yet.",
-    "backToList": "Back to list"
-  },
-  "comment": {
-    "title": "Comments",
-    "placeholder": "Write a comment…",
-    "submit": "Send",
-    "namePlaceholder": "Your name",
-    "empty": "Be the first to comment.",
-    "sending": "Sending…",
-    "success": "Comment sent!",
-    "error": "Failed to send comment."
-  },
-  "footer": {
-    "rights": "All rights reserved."
+  "voice": {
+    "start": "Start listening",
+    "stop": "Stop",
+    "listening": "Listening…",
+    "idle": "Press the microphone to start",
+    "empty": "No commands yet. Try saying something.",
+    "error": "Something went wrong",
+    "unsupported": "This browser does not support speech recognition yet. Please use Google Chrome or Microsoft Edge.",
+    "commandsTitle": "Example commands",
+    "commands": "open youtube · search cake recipe · what time · what date · dark mode · scroll down · reload · help"
   }
 }
