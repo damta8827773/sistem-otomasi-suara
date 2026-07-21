@@ -4,7 +4,9 @@ opening apps and sites, controlling volume, locking the screen."""
 from __future__ import annotations
 
 import ctypes
+import os
 import re
+import shutil
 import subprocess
 import webbrowser
 from dataclasses import dataclass
@@ -63,6 +65,42 @@ def _start(target: str) -> None:
     subprocess.Popen(["cmd", "/c", "start", "", target])
 
 
+def _find_chrome() -> str | None:
+    candidates = [
+        os.path.join(
+            os.environ.get("ProgramFiles", r"C:\Program Files"),
+            "Google", "Chrome", "Application", "chrome.exe",
+        ),
+        os.path.join(
+            os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"),
+            "Google", "Chrome", "Application", "chrome.exe",
+        ),
+        os.path.join(
+            os.environ.get("LOCALAPPDATA", ""),
+            "Google", "Chrome", "Application", "chrome.exe",
+        ),
+    ]
+    for path in candidates:
+        if path and os.path.isfile(path):
+            return path
+    return shutil.which("chrome")
+
+
+# Prefer Chrome so links reliably open in a real browser window.
+_CHROME = _find_chrome()
+
+
+def _open_url(url: str) -> None:
+    if _CHROME:
+        subprocess.Popen([_CHROME, url])
+    else:
+        webbrowser.open(url)
+
+
+def _search_url(query: str) -> str:
+    return "https://www.google.com/search?q=" + quote(query)
+
+
 def _tap_key(vk: int, times: int = 1) -> None:
     for _ in range(times):
         ctypes.windll.user32.keybd_event(vk, 0, 0, 0)  # key down
@@ -88,13 +126,13 @@ def execute(intent: Intent, lang: str | None) -> ActionResult:
                 _start(APPS[word])
                 return ActionResult(True, msg(f"Membuka {word}", f"Opening {word}"))
             if word in SITES:
-                webbrowser.open(SITES[word])
+                _open_url(SITES[word])
                 return ActionResult(True, msg(f"Membuka {word}", f"Opening {word}"))
             if "." in word and len(word) > 3:
-                webbrowser.open("https://" + word)
+                _open_url("https://" + word)
                 return ActionResult(True, msg(f"Membuka {word}", f"Opening {word}"))
         # Nothing recognized: search for it instead of failing with a shell error.
-        webbrowser.open("https://www.google.com/search?q=" + quote(arg))
+        _open_url(_search_url(arg))
         return ActionResult(
             True, msg(f"Tidak ketemu aplikasinya, mencari {arg}", f"Not found, searching {arg}")
         )
@@ -102,7 +140,7 @@ def execute(intent: Intent, lang: str | None) -> ActionResult:
     if action == "search":
         if not arg:
             return ActionResult(False, msg("Mau cari apa?", "Search for what?"))
-        webbrowser.open("https://www.google.com/search?q=" + quote(arg))
+        _open_url(_search_url(arg))
         return ActionResult(True, msg(f"Mencari {arg}", f"Searching {arg}"))
 
     if action == "time":
