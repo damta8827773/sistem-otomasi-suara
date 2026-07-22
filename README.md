@@ -44,6 +44,11 @@ Open works with known sites (youtube, google, github, gmail, whatsapp, ...),
 installed apps (notepad, kalkulator, chrome, spotify, pengaturan, ...), and any
 domain you say (for example "buka github.com").
 
+**Phrasing is forgiving.** Speech recognition often mangles the verb but gets
+the target right, so if a known name appears anywhere in what you said, it
+opens. "Halo jalan kan youtube dong" still opens YouTube. An explicit search
+verb ("cari ...") always wins, so "cari video youtube" searches instead.
+
 ## Requirements
 
 - **Windows, macOS, or Linux.** Fully tested on Windows; macOS and Linux use

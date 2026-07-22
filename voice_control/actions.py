@@ -13,6 +13,7 @@ from datetime import datetime
 from urllib.parse import quote
 
 from . import system_ops
+from .catalog import APPS, SITES
 from .intents import Intent
 
 
@@ -20,41 +21,6 @@ from .intents import Intent
 class ActionResult:
     ok: bool
     message: str
-
-
-# Spoken name -> website.
-SITES: dict[str, str] = {
-    "youtube": "https://youtube.com",
-    "google": "https://google.com",
-    "github": "https://github.com",
-    "gmail": "https://mail.google.com",
-    "whatsapp": "https://web.whatsapp.com",
-    "instagram": "https://instagram.com",
-    "tiktok": "https://tiktok.com",
-    "maps": "https://maps.google.com",
-    "chatgpt": "https://chat.openai.com",
-}
-
-# Spoken name -> app launch target. Values are tuned for Windows; on macOS and
-# Linux the OS launcher resolves what it can and unknown names fall back to a
-# web search.
-APPS: dict[str, str] = {
-    "notepad": "notepad",
-    "kalkulator": "calc",
-    "calculator": "calc",
-    "paint": "mspaint",
-    "explorer": "explorer",
-    "file": "explorer",
-    "folder": "explorer",
-    "cmd": "cmd",
-    "chrome": "chrome",
-    "edge": "msedge",
-    "spotify": "spotify:",
-    "kamera": "microsoft.windows.camera:",
-    "camera": "microsoft.windows.camera:",
-    "pengaturan": "ms-settings:",
-    "settings": "ms-settings:",
-}
 
 
 def _search_url(query: str) -> str:

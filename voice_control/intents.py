@@ -1,25 +1,30 @@
-"""Turn a transcript into an Intent by keyword matching. Keywords cover several
-languages (Indonesian and English by default); add more freely."""
+"""Turn a transcript into an Intent.
+
+Speech recognition often mangles the command verb (for example "buka" becomes
+"jalan kan" or "mana"), but the target word ("youtube") is usually correct. So
+the parser is forgiving: if a known site or app name appears anywhere in the
+phrase, it opens it, even when the verb was misheard.
+"""
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
+from .catalog import KNOWN_TARGETS
 
-@dataclass
-class Intent:
-    action: str
-    arg: str = ""
-    raw: str = ""
+# Verbs that mean "open / launch / play this".
+OPEN_VERBS = (
+    "buka", "bukain", "bukakan", "jalankan", "mainkan", "putar", "play",
+    "open", "launch", "jalan",
+)
 
+# Verbs that mean "search the web for this". Note: "google" is intentionally
+# NOT here, since "buka google" should open the site, not search.
+SEARCH_VERBS = ("cari", "carikan", "search", "find", "googling", "telusuri")
 
-# Commands that capture the words after the keyword as an argument.
-CAPTURE_COMMANDS: dict[str, list[str]] = {
-    "open_site": ["buka", "bukakan", "open", "launch"],
-    "search": ["cari", "carikan", "search", "find", "googling"],
-}
-
-# Commands triggered by a phrase, no argument. Multi word phrases first.
+# Phrase commands with no argument. Multi-word entries are matched as a phrase;
+# single words are matched on a word boundary to avoid false substrings.
 SIMPLE_COMMANDS: dict[str, list[str]] = {
     "time": ["jam berapa", "what time", "waktu sekarang"],
     "date": ["tanggal berapa", "hari apa", "what date", "what day"],
@@ -31,22 +36,61 @@ SIMPLE_COMMANDS: dict[str, list[str]] = {
     "quit": ["berhenti", "keluar program", "stop listening", "exit", "quit"],
 }
 
-_STRIP = " .,!?;:"
+
+@dataclass
+class Intent:
+    action: str
+    arg: str = ""
+    raw: str = ""
+
+
+def _normalize(text: str) -> str:
+    # Lower case, keep dots (for domains), turn other punctuation into spaces.
+    low = re.sub(r"[^\w\s.]", " ", text.lower())
+    return re.sub(r"\s+", " ", low).strip()
+
+
+def _after(words: list[str], verb: str) -> str:
+    try:
+        index = words.index(verb)
+    except ValueError:
+        return ""
+    return " ".join(words[index + 1:]).strip()
 
 
 def parse_intent(text: str) -> Intent:
     raw = text.strip()
-    low = raw.lower().strip(_STRIP)
+    low = _normalize(raw)
+    words = low.split()
 
-    for action, keywords in CAPTURE_COMMANDS.items():
-        for keyword in keywords:
-            if low.startswith(keyword + " "):
-                arg = raw[len(keyword):].strip(_STRIP).strip()
-                return Intent(action, arg, raw)
+    # 1. Explicit search verb wins first, so "cari video youtube" searches
+    #    rather than opening YouTube.
+    for verb in SEARCH_VERBS:
+        if verb in words:
+            arg = _after(words, verb)
+            if arg:
+                return Intent("search", arg, raw)
 
-    for action, keywords in SIMPLE_COMMANDS.items():
-        for keyword in keywords:
-            if low == keyword or keyword in low:
+    # 2. Phrase commands (time, date, volume, lock, help, quit).
+    for action, phrases in SIMPLE_COMMANDS.items():
+        for phrase in phrases:
+            hit = phrase in low if " " in phrase else phrase in words
+            if hit:
                 return Intent(action, "", raw)
+
+    # 3. A known site or app named anywhere -> open it, even if the verb was
+    #    misheard. This is what makes "buka youtube" robust.
+    for word in words:
+        name = word.strip(".")
+        if name in KNOWN_TARGETS:
+            return Intent("open_site", name, raw)
+
+    # 4. An open verb followed by something (a domain, or an unknown name that
+    #    will fall back to a web search in the action layer).
+    for verb in OPEN_VERBS:
+        if verb in words:
+            arg = _after(words, verb)
+            if arg:
+                return Intent("open_site", arg, raw)
 
     return Intent("unknown", "", raw)
