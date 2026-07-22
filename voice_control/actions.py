@@ -1,18 +1,18 @@
 """Execute an Intent on the laptop. Every action here touches the real system:
-opening apps and sites, controlling volume, locking the screen."""
+opening apps and sites, controlling volume, locking the screen.
+
+All OS-specific work is delegated to system_ops, so this module is platform
+neutral and every branch fails safely (a failed action returns a message rather
+than raising)."""
 
 from __future__ import annotations
 
-import ctypes
-import os
 import re
-import shutil
-import subprocess
-import webbrowser
 from dataclasses import dataclass
 from datetime import datetime
 from urllib.parse import quote
 
+from . import system_ops
 from .intents import Intent
 
 
@@ -35,7 +35,9 @@ SITES: dict[str, str] = {
     "chatgpt": "https://chat.openai.com",
 }
 
-# Spoken name -> launch target understood by the Windows shell `start`.
+# Spoken name -> app launch target. Values are tuned for Windows; on macOS and
+# Linux the OS launcher resolves what it can and unknown names fall back to a
+# web search.
 APPS: dict[str, str] = {
     "notepad": "notepad",
     "kalkulator": "calc",
@@ -54,57 +56,9 @@ APPS: dict[str, str] = {
     "settings": "ms-settings:",
 }
 
-# Virtual key codes for media volume keys.
-_VK_VOLUME_MUTE = 0xAD
-_VK_VOLUME_DOWN = 0xAE
-_VK_VOLUME_UP = 0xAF
-
-
-def _start(target: str) -> None:
-    # `start` resolves app names on PATH, protocols (ms-settings:) and URLs.
-    subprocess.Popen(["cmd", "/c", "start", "", target])
-
-
-def _find_chrome() -> str | None:
-    candidates = [
-        os.path.join(
-            os.environ.get("ProgramFiles", r"C:\Program Files"),
-            "Google", "Chrome", "Application", "chrome.exe",
-        ),
-        os.path.join(
-            os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"),
-            "Google", "Chrome", "Application", "chrome.exe",
-        ),
-        os.path.join(
-            os.environ.get("LOCALAPPDATA", ""),
-            "Google", "Chrome", "Application", "chrome.exe",
-        ),
-    ]
-    for path in candidates:
-        if path and os.path.isfile(path):
-            return path
-    return shutil.which("chrome")
-
-
-# Prefer Chrome so links reliably open in a real browser window.
-_CHROME = _find_chrome()
-
-
-def _open_url(url: str) -> None:
-    if _CHROME:
-        subprocess.Popen([_CHROME, url])
-    else:
-        webbrowser.open(url)
-
 
 def _search_url(query: str) -> str:
     return "https://www.google.com/search?q=" + quote(query)
-
-
-def _tap_key(vk: int, times: int = 1) -> None:
-    for _ in range(times):
-        ctypes.windll.user32.keybd_event(vk, 0, 0, 0)  # key down
-        ctypes.windll.user32.keybd_event(vk, 0, 2, 0)  # key up
 
 
 def execute(intent: Intent, lang: str | None) -> ActionResult:
@@ -119,20 +73,20 @@ def execute(intent: Intent, lang: str | None) -> ActionResult:
     if action == "open_site":
         if not arg:
             return ActionResult(False, msg("Mau buka apa?", "Open what?"))
-        # Scan the words for a known app, site, or domain so filler words like
+        # Scan words for a known app, site, or domain so filler words like
         # "coba dong" or "tolong" do not break the match.
         for word in re.findall(r"[a-z0-9.]+", arg.lower()):
             if word in APPS:
-                _start(APPS[word])
+                system_ops.open_target(APPS[word])
                 return ActionResult(True, msg(f"Membuka {word}", f"Opening {word}"))
             if word in SITES:
-                _open_url(SITES[word])
+                system_ops.open_url(SITES[word])
                 return ActionResult(True, msg(f"Membuka {word}", f"Opening {word}"))
             if "." in word and len(word) > 3:
-                _open_url("https://" + word)
+                system_ops.open_url("https://" + word)
                 return ActionResult(True, msg(f"Membuka {word}", f"Opening {word}"))
-        # Nothing recognized: search for it instead of failing with a shell error.
-        _open_url(_search_url(arg))
+        # Nothing recognized: search for it instead of failing.
+        system_ops.open_url(_search_url(arg))
         return ActionResult(
             True, msg(f"Tidak ketemu aplikasinya, mencari {arg}", f"Not found, searching {arg}")
         )
@@ -140,7 +94,7 @@ def execute(intent: Intent, lang: str | None) -> ActionResult:
     if action == "search":
         if not arg:
             return ActionResult(False, msg("Mau cari apa?", "Search for what?"))
-        _open_url(_search_url(arg))
+        system_ops.open_url(_search_url(arg))
         return ActionResult(True, msg(f"Mencari {arg}", f"Searching {arg}"))
 
     if action == "time":
@@ -152,20 +106,24 @@ def execute(intent: Intent, lang: str | None) -> ActionResult:
         return ActionResult(True, msg(f"Hari ini {today}", f"Today is {today}"))
 
     if action == "volume_up":
-        _tap_key(_VK_VOLUME_UP, 5)
-        return ActionResult(True, msg("Volume dinaikkan", "Volume up"))
+        ok = system_ops.volume_up()
+        return ActionResult(ok, msg("Volume dinaikkan", "Volume up") if ok
+                            else msg("Gagal mengatur volume", "Could not change volume"))
 
     if action == "volume_down":
-        _tap_key(_VK_VOLUME_DOWN, 5)
-        return ActionResult(True, msg("Volume diturunkan", "Volume down"))
+        ok = system_ops.volume_down()
+        return ActionResult(ok, msg("Volume diturunkan", "Volume down") if ok
+                            else msg("Gagal mengatur volume", "Could not change volume"))
 
     if action == "mute":
-        _tap_key(_VK_VOLUME_MUTE)
-        return ActionResult(True, msg("Suara dibisukan", "Muted"))
+        ok = system_ops.mute()
+        return ActionResult(ok, msg("Suara dibisukan", "Muted") if ok
+                            else msg("Gagal membisukan", "Could not mute"))
 
     if action == "lock":
-        ctypes.windll.user32.LockWorkStation()
-        return ActionResult(True, msg("Mengunci layar", "Locking the screen"))
+        ok = system_ops.lock_screen()
+        return ActionResult(ok, msg("Mengunci layar", "Locking the screen") if ok
+                            else msg("Gagal mengunci layar", "Could not lock the screen"))
 
     if action == "help":
         return ActionResult(

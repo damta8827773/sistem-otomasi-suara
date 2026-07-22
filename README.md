@@ -8,7 +8,7 @@ locks. It understands any language, because it transcribes with Whisper.
 
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Whisper](https://img.shields.io/badge/STT-faster--whisper-5A45FF)](https://github.com/SYSTRAN/faster-whisper)
-[![Platform](https://img.shields.io/badge/Platform-Windows-0078D6?logo=windows&logoColor=white)](#)
+[![Platform](https://img.shields.io/badge/Platform-Windows_%7C_macOS_%7C_Linux-0078D6)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 </div>
@@ -46,7 +46,9 @@ domain you say (for example "buka github.com").
 
 ## Requirements
 
-- **Windows** (uses Windows shell, volume keys, screen lock, and the SAPI voice).
+- **Windows, macOS, or Linux.** Fully tested on Windows; macOS and Linux use
+  standard tools (`open`/`xdg-open`, `osascript`/`pactl`, `say`/`espeak`) and
+  degrade gracefully when one is missing.
 - **Python 3.10 or newer** (tested on 3.14).
 - A microphone.
 - Internet on the first run only, to download the Whisper model once.
@@ -93,8 +95,9 @@ voice_control/
   listener.py     microphone capture + voice activity detection
   transcriber.py  Whisper speech to text (auto language)
   intents.py      transcript -> command
-  actions.py      run the command on the laptop
-  speech.py       spoken reply (Windows SAPI)
+  actions.py      map a command to an action (platform neutral)
+  system_ops.py   all OS-specific behavior (Windows / macOS / Linux)
+  speech.py       spoken reply
 requirements.txt
 run.bat           convenience launcher
 ```
@@ -108,9 +111,19 @@ action in `voice_control/actions.py`.
 
 - Speech recognition runs locally after the one-time model download. No audio
   leaves the machine.
-- Actions are Windows specific. Porting to macOS or Linux means changing
-  `actions.py` (volume keys, screen lock) and `speech.py`.
+- All OS-specific behavior is isolated in `voice_control/system_ops.py`. Windows
+  is fully tested; macOS and Linux are best-effort through standard tools.
+- App names in `APPS` are tuned for Windows. On macOS and Linux an unknown app
+  name simply falls back to a web search, so nothing breaks.
 - Recognition quality depends on the model size and your microphone.
+
+## Security
+
+- Voice input is never passed to a shell. Every subprocess call uses argument
+  lists (never `shell=True`), URLs are percent-encoded or drawn from a fixed
+  allow-list, and app targets come only from the fixed `APPS` table.
+- The system performs no destructive actions (no delete, format, or shutdown).
+- Each command runs inside a guard, so a single failure can never crash the loop.
 
 ## License
 

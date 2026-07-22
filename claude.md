@@ -17,9 +17,9 @@ speaks a short reply back. Voice is the only input. There is no web UI.
 - **Speech to text:** faster-whisper (Whisper), auto-detects language, offline
   after the one-time model download
 - **Microphone:** sounddevice (bundled PortAudio, no external binary)
-- **Actions:** Windows shell (`start`), ctypes for volume keys and screen lock
-- **Spoken reply:** Windows SAPI via PowerShell (no extra dependency)
-- **Platform:** Windows (the actions are Windows specific)
+- **Actions:** cross-platform, isolated in `system_ops.py` (Windows: shell +
+  ctypes + SAPI; macOS: open/osascript/say/pmset; Linux: xdg-open/pactl/espeak)
+- **Platform:** Windows (fully tested), macOS and Linux (best-effort)
 
 ## Data flow
 
@@ -36,8 +36,9 @@ voice_control/
   listener.py     mic capture + energy based voice activity detection
   transcriber.py  faster-whisper wrapper (language=None => auto)
   intents.py      keyword table -> Intent (multi language)
-  actions.py      ActionResult execute(): opens apps/sites, volume, lock
-  speech.py       speak(): Windows SAPI reply
+  actions.py      ActionResult execute(): platform-neutral command mapping
+  system_ops.py   all OS-specific ops (open, volume, lock, speak) per platform
+  speech.py       speak(): honors VOICE_SPEAK, delegates to system_ops
 requirements.txt  faster-whisper, sounddevice, numpy
 run.bat           launcher using the .venv
 ```
