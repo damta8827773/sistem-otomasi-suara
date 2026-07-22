@@ -32,9 +32,28 @@ SIMPLE_COMMANDS: dict[str, list[str]] = {
     "volume_down": ["volume turun", "perkecil suara", "volume down", "quieter"],
     "mute": ["bisukan", "senyapkan", "mute"],
     "lock": ["kunci layar", "kunci laptop", "lock screen", "lock"],
+    "windows_list": ["daftar jendela", "apa saja yang terbuka", "semua jendela",
+                     "list windows", "open windows"],
+    "screen": ["layar apa", "sedang buka apa", "lagi buka apa", "jendela apa",
+               "baca layar", "what is on screen", "active window"],
     "help": ["bantuan", "perintah apa saja", "help", "what can you do"],
     "quit": ["berhenti", "keluar program", "stop listening", "exit", "quit"],
 }
+
+# Phrases Whisper commonly invents from music or background noise. They are
+# never real commands, so they are dropped before parsing.
+NOISE_PHRASES = frozenset({
+    "terima kasih", "terima kasih banyak", "terimakasih",
+    "thank you", "thanks for watching", "thank you for watching",
+    "silakan berlangganan", "jangan lupa subscribe", "subscribe",
+    "sampai jumpa", "bye", "you", "hmm", "oke", "ok", "ya", "iya",
+})
+
+
+def is_probably_noise(text: str) -> bool:
+    """True when the transcript is almost certainly background noise."""
+    low = _normalize(text)
+    return not low or low in NOISE_PHRASES or len(low) <= 2
 
 
 @dataclass

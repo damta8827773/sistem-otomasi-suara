@@ -25,14 +25,25 @@ class Microphone:
         # indata is float32 with shape (frames, 1); keep a copy of channel 0.
         self._q.put(indata[:, 0].copy())
 
+    def drain(self) -> None:
+        """Discard buffered audio.
+
+        Called after the system speaks so its own voice, and any media playing
+        through the speakers meanwhile, is not transcribed as a command.
+        """
+        try:
+            while True:
+                self._q.get_nowait()
+        except queue.Empty:
+            pass
+
     def _calibrate(self, seconds: float = 0.5) -> float:
-        """Measure the ambient noise floor and derive a speech threshold."""
+        """Measure the ambient noise floor."""
         samples = []
         for _ in range(int(seconds * 1000 / self.cfg.frame_ms)):
             frame = self._q.get()
             samples.append(float(np.sqrt(np.mean(frame**2))))
-        floor = float(np.mean(samples)) if samples else 0.0
-        return max(self.cfg.energy_threshold, floor * 3.5)
+        return float(np.mean(samples)) if samples else 0.0
 
     def utterances(self) -> Iterator[np.ndarray]:
         cfg = self.cfg
@@ -46,7 +57,9 @@ class Microphone:
             blocksize=self.frame_len,
             callback=self._callback,
         ):
-            threshold = self._calibrate()
+            # Noise floor adapts continuously, so speech is still detected when
+            # music or a video starts playing through the speakers.
+            noise = self._calibrate()
 
             collecting = False
             buffer: list[np.ndarray] = []
@@ -55,6 +68,12 @@ class Microphone:
             while True:
                 frame = self._q.get()
                 rms = float(np.sqrt(np.mean(frame**2)))
+
+                if not collecting:
+                    # Track the background level only between utterances.
+                    noise = 0.95 * noise + 0.05 * rms
+
+                threshold = max(cfg.energy_threshold, noise * 3.5)
                 speaking = rms >= threshold
 
                 if speaking:

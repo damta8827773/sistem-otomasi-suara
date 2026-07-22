@@ -34,6 +34,8 @@ Speak naturally in Indonesian, English, or another language. Examples:
 | `cari resep nasi goreng`     | Search the web                       |
 | `jam berapa` / `what time`   | Speak the current time               |
 | `tanggal berapa`             | Speak today's date                   |
+| `sedang buka apa` / `baca layar` | Say which window is in focus      |
+| `daftar jendela` / `list windows`| Say which windows are open        |
 | `volume naik` / `volume down`| Change the system volume             |
 | `bisukan` / `mute`           | Mute the sound                       |
 | `kunci layar` / `lock screen`| Lock the workstation                 |
@@ -121,6 +123,12 @@ action in `voice_control/actions.py`.
 - App names in `APPS` are tuned for Windows. On macOS and Linux an unknown app
   name simply falls back to a web search, so nothing breaks.
 - Recognition quality depends on the model size and your microphone.
+- **Media playing through your speakers is heard by the microphone.** The noise
+  floor adapts automatically, audio captured while the system is speaking is
+  discarded, and the phrases Whisper tends to invent from music are filtered
+  out. Even so, speak a little louder than the music, or use headphones.
+- Reading the screen means reading window titles, not the pixels. It needs no
+  extra permissions and no screenshots are taken.
 
 ## Security
 

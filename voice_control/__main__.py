@@ -13,7 +13,7 @@ import sys
 from . import system_ops
 from .actions import execute
 from .config import CONFIG
-from .intents import parse_intent
+from .intents import is_probably_noise, parse_intent
 from .listener import Microphone
 from .speech import speak
 from .transcriber import Transcriber
@@ -55,8 +55,11 @@ def main() -> int:
                 print(f"  ! gagal mengenali suara: {exc}")
                 continue
 
-            # Skip empty or pure-noise results (no actual word characters).
+            # Drop empty results, symbol-only output, and the stock phrases
+            # Whisper invents from music or background noise.
             if not text or not re.search(r"\w", text, re.UNICODE):
+                continue
+            if is_probably_noise(text):
                 continue
 
             print(f"  ● didengar [{lang}]: {text}")
@@ -71,6 +74,8 @@ def main() -> int:
             mark = "✓" if result.ok else "✗"
             print(f"  {mark} {result.message}\n")
             speak(result.message, lang)
+            # Throw away whatever the mic picked up while we were talking.
+            mic.drain()
 
             if intent.action == "quit":
                 break

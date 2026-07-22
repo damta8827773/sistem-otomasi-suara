@@ -91,12 +91,27 @@ def execute(intent: Intent, lang: str | None) -> ActionResult:
         return ActionResult(ok, msg("Mengunci layar", "Locking the screen") if ok
                             else msg("Gagal mengunci layar", "Could not lock the screen"))
 
+    if action == "screen":
+        title = system_ops.active_window_title()
+        if not title:
+            return ActionResult(False, msg("Tidak bisa membaca layar", "Cannot read the screen"))
+        return ActionResult(True, msg(f"Sedang membuka {title}", f"Currently showing {title}"))
+
+    if action == "windows_list":
+        titles = system_ops.list_windows(limit=6)
+        if not titles:
+            return ActionResult(False, msg("Tidak ada jendela terbaca", "No windows detected"))
+        listed = ", ".join(titles)
+        return ActionResult(True, msg(f"Yang terbuka: {listed}", f"Open windows: {listed}"))
+
     if action == "help":
         return ActionResult(
             True,
             msg(
-                "Coba: buka youtube, cari resep nasi goreng, jam berapa, volume naik, kunci layar, berhenti.",
-                "Try: open youtube, search fried rice, what time, volume up, lock screen, stop.",
+                "Coba: buka youtube, cari resep nasi goreng, jam berapa, "
+                "sedang buka apa, daftar jendela, volume naik, kunci layar, berhenti.",
+                "Try: open youtube, search fried rice, what time, what is on screen, "
+                "list windows, volume up, lock screen, stop.",
             ),
         )
 

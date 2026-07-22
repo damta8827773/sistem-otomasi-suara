@@ -136,6 +136,80 @@ def lock_screen() -> bool:
     return _run(["xdg-screensaver", "lock"])
 
 
+# --- Reading the screen -------------------------------------------------------
+def active_window_title() -> str:
+    """Title of the window currently in focus, or '' if it cannot be read."""
+    try:
+        if IS_WINDOWS:
+            import ctypes
+
+            user32 = ctypes.windll.user32
+            hwnd = user32.GetForegroundWindow()
+            length = user32.GetWindowTextLengthW(hwnd)
+            if not length:
+                return ""
+            buffer = ctypes.create_unicode_buffer(length + 1)
+            user32.GetWindowTextW(hwnd, buffer, length + 1)
+            return buffer.value.strip()
+        if IS_MAC:
+            result = subprocess.run(
+                ["osascript", "-e",
+                 'tell application "System Events" to get name of first '
+                 "application process whose frontmost is true"],
+                capture_output=True, text=True, timeout=5,
+            )
+            return result.stdout.strip()
+        result = subprocess.run(
+            ["xdotool", "getactivewindow", "getwindowname"],
+            capture_output=True, text=True, timeout=5,
+        )
+        return result.stdout.strip()
+    except Exception:
+        return ""
+
+
+def list_windows(limit: int = 8) -> list[str]:
+    """Titles of the visible windows, most relevant first."""
+    titles: list[str] = []
+    try:
+        if IS_WINDOWS:
+            import ctypes
+
+            user32 = ctypes.windll.user32
+            enum_proc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+
+            def callback(hwnd, _lparam):  # noqa: ANN001
+                if not user32.IsWindowVisible(hwnd):
+                    return True
+                length = user32.GetWindowTextLengthW(hwnd)
+                if length:
+                    buffer = ctypes.create_unicode_buffer(length + 1)
+                    user32.GetWindowTextW(hwnd, buffer, length + 1)
+                    title = buffer.value.strip()
+                    if title and title not in titles:
+                        titles.append(title)
+                return True
+
+            user32.EnumWindows(enum_proc(callback), 0)
+        elif IS_MAC:
+            result = subprocess.run(
+                ["osascript", "-e",
+                 'tell application "System Events" to get name of every '
+                 "application process whose visible is true"],
+                capture_output=True, text=True, timeout=5,
+            )
+            titles = [t.strip() for t in result.stdout.split(",") if t.strip()]
+        else:
+            result = subprocess.run(["wmctrl", "-l"], capture_output=True, text=True, timeout=5)
+            for line in result.stdout.splitlines():
+                parts = line.split(None, 3)
+                if len(parts) == 4:
+                    titles.append(parts[3])
+    except Exception:
+        pass
+    return titles[:limit]
+
+
 # --- Text to speech -----------------------------------------------------------
 def speak(text: str) -> None:
     if not text:
