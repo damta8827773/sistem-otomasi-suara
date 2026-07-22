@@ -91,6 +91,20 @@ def execute(intent: Intent, lang: str | None) -> ActionResult:
         return ActionResult(ok, msg("Mengunci layar", "Locking the screen") if ok
                             else msg("Gagal mengunci layar", "Could not lock the screen"))
 
+    if action in ("click", "right_click", "double_click"):
+        ok = system_ops.click(
+            button="right" if action == "right_click" else "left",
+            double=action == "double_click",
+        )
+        if not ok:
+            return ActionResult(False, msg("Gagal mengeklik", "Could not click"))
+        label = {
+            "click": msg("Diklik", "Clicked"),
+            "right_click": msg("Klik kanan", "Right clicked"),
+            "double_click": msg("Klik dua kali", "Double clicked"),
+        }[action]
+        return ActionResult(True, label)
+
     if action == "screen":
         title = system_ops.active_window_title()
         if not title:
@@ -108,10 +122,10 @@ def execute(intent: Intent, lang: str | None) -> ActionResult:
         return ActionResult(
             True,
             msg(
-                "Coba: buka youtube, cari resep nasi goreng, jam berapa, "
-                "sedang buka apa, daftar jendela, volume naik, kunci layar, berhenti.",
-                "Try: open youtube, search fried rice, what time, what is on screen, "
-                "list windows, volume up, lock screen, stop.",
+                "Coba: buka youtube, klik yang ditunjuk kursor, cari resep nasi goreng, "
+                "jam berapa, sedang buka apa, volume naik, kunci layar, berhenti.",
+                "Try: open youtube, click what the cursor points at, search fried rice, "
+                "what time, what is on screen, volume up, lock screen, stop.",
             ),
         )
 

@@ -34,6 +34,8 @@ Speak naturally in Indonesian, English, or another language. Examples:
 | `cari resep nasi goreng`     | Search the web                       |
 | `jam berapa` / `what time`   | Speak the current time               |
 | `tanggal berapa`             | Speak today's date                   |
+| `klik` / `buka ini` / `buka yang ditunjuk kursor` | Click whatever the mouse points at |
+| `klik kanan` / `klik dua kali` | Right click / double click         |
 | `sedang buka apa` / `baca layar` | Say which window is in focus      |
 | `daftar jendela` / `list windows`| Say which windows are open        |
 | `volume naik` / `volume down`| Change the system volume             |
@@ -45,6 +47,12 @@ Speak naturally in Indonesian, English, or another language. Examples:
 Open works with known sites (youtube, google, github, gmail, whatsapp, ...),
 installed apps (notepad, kalkulator, chrome, spotify, pengaturan, ...), and any
 domain you say (for example "buka github.com").
+
+**Point and speak.** To open a specific link, video, or button, hover the mouse
+over it and say `klik` (or "buka ini", "buka yang ditunjuk kursor"). The click
+lands wherever the pointer is, so anything on screen can be opened by voice.
+This takes priority over site names, so "buka youtube yang ditunjuk kursor"
+clicks that video instead of opening the YouTube home page.
 
 **Phrasing is forgiving.** Speech recognition often mangles the verb but gets
 the target right, so if a known name appears anywhere in what you said, it

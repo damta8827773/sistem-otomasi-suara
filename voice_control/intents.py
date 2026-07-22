@@ -23,6 +23,18 @@ OPEN_VERBS = (
 # NOT here, since "buka google" should open the site, not search.
 SEARCH_VERBS = ("cari", "carikan", "search", "find", "googling", "telusuri")
 
+# Clicking whatever the mouse is pointing at. Matched as substrings so word
+# forms like "ditunjuk" and "menunjuk" all count. Checked before the site-name
+# scan, so "buka youtube yang ditunjuk kursor" clicks that video instead of
+# opening the YouTube home page.
+DOUBLE_CLICK_HINTS = ("klik dua kali", "dua kali klik", "double click", "klik ganda")
+RIGHT_CLICK_HINTS = ("klik kanan", "right click")
+CLICK_HINTS = (
+    "klik", "click", "kursor", "cursor", "tunjuk",
+    "buka ini", "buka itu", "buka yang ini", "buka yang itu",
+    "pilih ini", "pilih itu", "tekan ini",
+)
+
 # Phrase commands with no argument. Multi-word entries are matched as a phrase;
 # single words are matched on a word boundary to avoid false substrings.
 SIMPLE_COMMANDS: dict[str, list[str]] = {
@@ -97,14 +109,24 @@ def parse_intent(text: str) -> Intent:
             if hit:
                 return Intent(action, "", raw)
 
-    # 3. A known site or app named anywhere -> open it, even if the verb was
+    # 3. Clicking what the mouse points at. Must come before the site-name scan
+    #    so "buka youtube yang ditunjuk kursor" clicks the video under the
+    #    cursor rather than opening youtube.com.
+    if any(hint in low for hint in DOUBLE_CLICK_HINTS):
+        return Intent("double_click", "", raw)
+    if any(hint in low for hint in RIGHT_CLICK_HINTS):
+        return Intent("right_click", "", raw)
+    if any(hint in low for hint in CLICK_HINTS):
+        return Intent("click", "", raw)
+
+    # 4. A known site or app named anywhere -> open it, even if the verb was
     #    misheard. This is what makes "buka youtube" robust.
     for word in words:
         name = word.strip(".")
         if name in KNOWN_TARGETS:
             return Intent("open_site", name, raw)
 
-    # 4. An open verb followed by something (a domain, or an unknown name that
+    # 5. An open verb followed by something (a domain, or an unknown name that
     #    will fall back to a web search in the action layer).
     for verb in OPEN_VERBS:
         if verb in words:

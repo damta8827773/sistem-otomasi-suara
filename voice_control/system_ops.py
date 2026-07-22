@@ -136,6 +136,44 @@ def lock_screen() -> bool:
     return _run(["xdg-screensaver", "lock"])
 
 
+# --- Mouse ---------------------------------------------------------------------
+def click(button: str = "left", double: bool = False) -> bool:
+    """Click at the current mouse position.
+
+    This is what makes "buka yang ditunjuk kursor" work: point at a link or a
+    video with the mouse, then say the command and it is clicked.
+    """
+    try:
+        if IS_WINDOWS:
+            import ctypes
+
+            user32 = ctypes.windll.user32
+            if button == "right":
+                down, up = 0x0008, 0x0010  # RIGHTDOWN, RIGHTUP
+            else:
+                down, up = 0x0002, 0x0004  # LEFTDOWN, LEFTUP
+            for _ in range(2 if double else 1):
+                user32.mouse_event(down, 0, 0, 0, 0)
+                user32.mouse_event(up, 0, 0, 0, 0)
+            return True
+        if IS_MAC:
+            tool = shutil.which("cliclick")
+            if not tool:
+                return False
+            code = "rc:." if button == "right" else ("dc:." if double else "c:.")
+            return _run([tool, code])
+        tool = shutil.which("xdotool")
+        if not tool:
+            return False
+        args = [tool, "click"]
+        if double:
+            args += ["--repeat", "2"]
+        args.append("3" if button == "right" else "1")
+        return _run(args)
+    except Exception:
+        return False
+
+
 # --- Reading the screen -------------------------------------------------------
 def active_window_title() -> str:
     """Title of the window currently in focus, or '' if it cannot be read."""
